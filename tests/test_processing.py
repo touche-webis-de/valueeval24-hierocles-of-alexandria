@@ -5,6 +5,7 @@ from valueeval24_hierocles_of_alexandria import combine_attained_and_constrained
 
 examples_path = Path("data") / "examples"
 
+
 class TestProcessing(unittest.TestCase):
 
     def test_combine_attained_and_constrained(self):
@@ -40,6 +41,7 @@ class TestProcessing(unittest.TestCase):
             with self.assertRaises(KeyError):
                 for _ in combine_attained_and_constrained(combine_detailed_values(input)):
                     print("Never reached!", flush=True)
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -6,6 +6,7 @@ from valueeval24_hierocles_of_alexandria import ValueClassifier
 
 examples_path = Path("data") / "examples"
 
+
 class TestClassifier(unittest.TestCase):
 
     @classmethod
@@ -25,6 +26,7 @@ class TestClassifier(unittest.TestCase):
             predictions = list(self._classifier.predict(file))
             self.assertGreaterEqual(predictions[0]["Universalism: nature attained"], 0.5)
             self.assertGreaterEqual(predictions[1]["Universalism: nature constrained"], 0.5)
+
 
 if __name__ == '__main__':
     unittest.main()
