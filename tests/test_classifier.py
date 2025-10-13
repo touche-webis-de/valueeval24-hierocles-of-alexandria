@@ -6,7 +6,7 @@ from valueeval24_hierocles_of_alexandria import ValueClassifier
 
 examples_path = Path("data") / "examples"
 
-class TestExamples(unittest.TestCase):
+class TestClassifier(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):

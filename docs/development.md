@@ -6,7 +6,7 @@ poetry run python -m valueeval24_hierocles_of_alexandria --help
 poetry run python -m valueeval24_hierocles_of_alexandria data/examples/simple.tsv
 ```
 
-## Running unittests (automatically on push)
+## Running unittests (can not run on GitHub: model too large)
 
 ```shell
 poetry run python -m unittest

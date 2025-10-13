@@ -1,8 +1,13 @@
-from .value_classifier import ValueClassifier, predictions_to_tsv, values
+from .value_classifier import (
+    ValueClassifier, combine_attained_and_constrained, combine_detailed_values, write_predictions, coarse_values, values
+)
 
 __all__ = [
-    "predictions_to_tsv",
     "ValueClassifier",
+    "combine_attained_and_constrained",
+    "combine_detailed_values",
+    "write_predictions",
+    "coarse_values",
     "values"
 ]
 

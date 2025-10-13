@@ -12,10 +12,16 @@ from .multi_head_model import MultiHead_MultiLabel_XL, id2lang_dict, lang_dict, 
 
 datasets.utils.logging.disable_progress_bar()
 
-values = ["Self-direction: thought", "Self-direction: action", "Stimulation", "Hedonism", "Achievement",
-          "Power: dominance", "Power: resources", "Face", "Security: personal", "Security: societal", "Tradition",
-          "Conformity: rules", "Conformity: interpersonal", "Humility", "Benevolence: caring",
-          "Benevolence: dependability", "Universalism: concern", "Universalism: nature", "Universalism: tolerance"]
+values = [
+    "Self-direction: thought", "Self-direction: action", "Stimulation", "Hedonism", "Achievement",
+    "Power: dominance", "Power: resources", "Face", "Security: personal", "Security: societal", "Tradition",
+    "Conformity: rules", "Conformity: interpersonal", "Humility", "Benevolence: caring",
+    "Benevolence: dependability", "Universalism: concern", "Universalism: nature", "Universalism: tolerance"
+]
+coarse_values = [
+    "Self-direction", "Stimulation", "Hedonism", "Achievement", "Power", "Face", "Security", "Tradition", "Conformity",
+    "Humility", "Benevolence", "Universalism"
+]
 labels = sum([[value + " attained", value + " constrained"] for value in values], [])
 id2label = {idx: label for idx, label in enumerate(labels)}
 label_thresholds = [
@@ -29,15 +35,78 @@ model_name = "SotirisLegkas/multi-head-xlm-xl-tokens-38"
 look_back = 2
 
 
-def predictions_to_tsv(predictions, output_file=sys.stdout):
+def combine_attained_and_constrained(predictions, mode=sum):
+    for prediction in predictions:
+        converted_prediction = {
+            "Text-ID": prediction["Text-ID"],
+            "Sentence-ID": prediction["Sentence-ID"],
+            "Text": prediction["Text"],
+            "Language": prediction["Language"]
+        }
+        target_labels = values
+        for target_label in target_labels:
+            input_prediction = [
+                float(prediction[target_label + " attained"]),
+                float(prediction[target_label + " constrained"])
+            ]
+            converted_prediction[target_label] = mode(input_prediction)
+        yield converted_prediction
+
+
+def combine_detailed_values(predictions, mode=max):
+    for prediction in predictions:
+        converted_prediction = {
+            "Text-ID": prediction["Text-ID"],
+            "Sentence-ID": prediction["Sentence-ID"],
+            "Text": prediction["Text"],
+            "Language": prediction["Language"]
+        }
+        target_labels = coarse_values
+        if "Achievement attained" in prediction.keys():
+            for target_label in target_labels:
+                input_prediction = [
+                    float(prediction[label]) for label in prediction.keys()
+                    if label.startswith(target_label) and label.endswith(" attained")
+                ]
+                converted_prediction[target_label + " attained"] = mode(input_prediction)
+                input_prediction = [
+                    float(prediction[label]) for label in prediction.keys()
+                    if label.startswith(target_label) and label.endswith(" constrained")
+                ]
+                converted_prediction[target_label + " constrained"] = mode(input_prediction)
+            yield converted_prediction
+        else:
+            for target_label in target_labels:
+                input_prediction = [
+                    float(prediction[label]) for label in prediction.keys()
+                    if label.startswith(target_label)
+                ]
+                converted_prediction[target_label] = mode(input_prediction)
+            yield converted_prediction
+
+
+def write_predictions(predictions, output_file=sys.stdout):
     if isinstance(output_file, str):
         with open(output_file, "w", newline="") as output_file_handle:
-            predictions_to_tsv(predictions, output_file=output_file_handle)
+            write_predictions(predictions, output_file=output_file_handle)
     else:
-        fieldnames = ["Text-ID", "Sentence-ID", "Text", "Language"] + labels
-        writer = csv.DictWriter(output_file, fieldnames=fieldnames, delimiter="\t")
-        writer.writeheader()
+        writer = None
         for prediction in predictions:
+            if writer is None:
+                fieldnames = ["Text-ID", "Sentence-ID", "Text", "Language"]
+                if "Self-direction: thought attained" in prediction.keys():
+                    fieldnames = fieldnames + labels
+                elif "Self-direction: thought" in prediction.keys():
+                    fieldnames = fieldnames + values
+                elif "Self-direction attained" in prediction.keys():
+                    fieldnames = fieldnames + sum(
+                        [[value + " attained", value + " constrained"] for value in coarse_values],
+                        []
+                    )
+                else:
+                    fieldnames = fieldnames + coarse_values
+                writer = csv.DictWriter(output_file, fieldnames=fieldnames, delimiter="\t")
+                writer.writeheader()
             writer.writerow(prediction)
 
 
@@ -164,11 +233,25 @@ class ValueClassifier(object):
             else:
                 previous_sentences.append(f"{text} <NONE> </s> ")
 
-    def predict(self, data) -> Generator[dict, None, None]:
+    def predict(
+            self,
+            data,
+            attained_and_constrained=True,
+            detailed_values=True
+            ) -> Generator[dict, None, None]:
         if isinstance(data, pandas.DataFrame):
-            return self.predict(data.to_dict("records"))
+            return self.predict(
+                data.to_dict("records"),
+                attained_and_constrained=attained_and_constrained,
+                detailed_values=detailed_values)
         else:
-            return self._predict_for_text(self._validate_input_data(data))
+            predictions = self._predict_for_text(self._validate_input_data(data))
+            if not attained_and_constrained:
+                predictions = combine_attained_and_constrained(predictions)
+            if not detailed_values:
+                predictions = combine_detailed_values(predictions)
 
-    def predict_to_tsv(self, data, output_file=sys.stdout) -> None:
-        predictions_to_tsv(self.predict(data), output_file)
+            return predictions
+
+    def predict_to_tsv(self, data, output_file=sys.stdout, **kwargs) -> None:
+        write_predictions(self.predict(data, **kwargs), output_file)

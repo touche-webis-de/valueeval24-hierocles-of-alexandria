@@ -21,13 +21,26 @@ parser.add_argument(
     "--cpu", action=argparse.BooleanOptionalAction,
     help="Force usage of CPU (and not GPU)."
 )
+parser.add_argument(
+    "--combine-attained-and-constrained", action=argparse.BooleanOptionalAction,
+    help="Combine attained and constrained scores to one (taking the sum)."
+)
+parser.add_argument(
+    "--combine-detailed-values", action=argparse.BooleanOptionalAction,
+    help="Combine detailed values (e.g., 'Universalism: concern', 'Universalism: nature', and 'Universalism: tolerance') " +
+    "to one (taking the maximum)."
+)
 
 opts = parser.parse_args()
 
 
 def predict(input):
     classifier = ValueClassifier(use_cpu=opts.cpu)
-    classifier.predict_to_tsv(input, opts.output)
+    classifier.predict_to_tsv(
+        input,
+        output_file=opts.output,
+        attained_and_constrained=not opts.combine_attained_and_constrained,
+        detailed_values=not opts.combine_detailed_values)
 
 
 if opts.input.endswith(".txt"):
