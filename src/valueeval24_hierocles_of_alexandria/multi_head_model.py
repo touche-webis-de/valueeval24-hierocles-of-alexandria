@@ -3,7 +3,6 @@ import torch.nn as nn
 from torch.nn import BCEWithLogitsLoss
 from transformers.modeling_outputs import SequenceClassifierOutput
 from typing import Optional, Tuple, Union
-import torch.utils.checkpoint
 from transformers.models.xlm_roberta_xl.modeling_xlm_roberta_xl import (
     XLMRobertaXLPreTrainedModel, XLMRobertaXLModel, XLMRobertaXLLayer
 )
@@ -102,7 +101,7 @@ class MultiHead_MultiLabel_XL(XLMRobertaXLPreTrainedModel):
         output_attentions: Optional[bool] = None,
         output_hidden_states: Optional[bool] = None,
         return_dict: Optional[bool] = None,
-        language=None
+        language: list[int] = []
     ) -> Union[Tuple, SequenceClassifierOutput]:
         return_dict = return_dict if return_dict is not None else self.config.use_return_dict
 
@@ -139,7 +138,7 @@ class MultiHead_MultiLabel_XL(XLMRobertaXLPreTrainedModel):
 
         return SequenceClassifierOutput(
             loss=loss,
-            logits=logits,
+            logits=logits,  # type: ignore
             hidden_states=outputs.hidden_states,
             attentions=outputs.attentions,
         )

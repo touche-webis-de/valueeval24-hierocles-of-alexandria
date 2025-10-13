@@ -30,12 +30,16 @@ parser.add_argument(
     help="Combine detailed values (e.g., 'Universalism: concern', 'Universalism: nature', and 'Universalism: tolerance') " +
     "to one (taking the maximum)."
 )
+parser.add_argument(
+    "--quantization"
+)
 
 opts = parser.parse_args()
 
 
 def predict(input):
-    classifier = ValueClassifier(use_cpu=opts.cpu)
+    quantization_config = None
+    classifier = ValueClassifier(use_cpu=opts.cpu, quantization_config=quantization_config)
     classifier.predict_to_tsv(
         input,
         output_file=opts.output,

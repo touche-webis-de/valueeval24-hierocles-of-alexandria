@@ -1,16 +1,12 @@
 import csv
-import datasets
 import numpy
 import transformers
-from transformers.training_args import TrainingArguments
 from typing import Generator
+import torch
 import pandas
-from pathlib import Path
 import sys
 
 from .multi_head_model import MultiHead_MultiLabel_XL, id2lang_dict, lang_dict, lang_default
-
-datasets.utils.logging.disable_progress_bar()
 
 values = [
     "Self-direction: thought", "Self-direction: action", "Stimulation", "Hedonism", "Achievement",
@@ -112,13 +108,13 @@ def write_predictions(predictions, output_file=sys.stdout):
 
 class ValueClassifier(object):
 
-    def __init__(self, use_cpu=False):
-        self.tokenizer = transformers.AutoTokenizer.from_pretrained(model_name)
-        self.model = MultiHead_MultiLabel_XL.from_pretrained(model_name, problem_type="multi_label_classification")
-        self.trainer = transformers.Trainer(model=self.model, args=TrainingArguments(model_name, use_cpu=use_cpu))
-        unused_train_dir = Path(model_name)
-        unused_train_dir.rmdir()
-        unused_train_dir.parent.rmdir()
+    def __init__(self, use_cpu=False, **kwargs):
+        self._device = torch.device("cuda" if torch.cuda.is_available() and not use_cpu else "cpu")
+        self._tokenizer = transformers.AutoTokenizer.from_pretrained(model_name)
+        self._model = MultiHead_MultiLabel_XL.from_pretrained(
+            model_name, problem_type="multi_label_classification", **kwargs
+        )
+        self._model.to(self._device)  # type: ignore
 
     def _validate_sentence_id(self, validated, entry, i):
         if "Sentence-ID" in entry.keys():
@@ -207,17 +203,21 @@ class ValueClassifier(object):
         return confidence
 
     def _predict_for_text(self, text_data: Generator[dict, None, None]) -> Generator[dict, None, None]:
-        previous_sentences = None
+        previous_sentences = []
         last_text_id = None
         for entry in text_data:
             if last_text_id != entry["Text-ID"]:
                 previous_sentences = []
             text = entry["Text"]
             text_in_context = "".join(previous_sentences[-look_back:] + [text])
-            input = {"Text": text_in_context, "language": entry["Language"]}
-            input.update(self.tokenizer(text_in_context, padding="max_length", max_length=512, truncation=True))
-            input = datasets.Dataset.from_dict({key: [value] for key, value in input.items()})
-            predictions, _, _ = self.trainer.predict(input, metric_key_prefix="predict")
+            input = {"language": [entry["Language"]]}
+            input.update(self._tokenizer(
+                text_in_context, padding="max_length", max_length=512, truncation=True, return_tensors="pt"
+            ))
+            input["input_ids"] = input["input_ids"].to(self._device)  # type: ignore
+            input["attention_mask"] = input["attention_mask"].to(self._device)  # type: ignore
+            output = self._model(**input)
+            predictions = output.logits.detach().cpu().numpy()
             confidence_values = self._thresholds(predictions[0])
             output = entry.copy()
             output["Language"] = id2lang_dict[output["Language"]]
@@ -238,8 +238,14 @@ class ValueClassifier(object):
             data,
             attained_and_constrained=True,
             detailed_values=True
-            ) -> Generator[dict, None, None]:
+            ) -> Generator[dict, None, None] | dict:
+        if isinstance(data, str):
+            return next(self.predict(
+                [data],
+                attained_and_constrained=attained_and_constrained,
+                detailed_values=detailed_values))  # type: ignore
         if isinstance(data, pandas.DataFrame):
+            # TODO return DataFrame
             return self.predict(
                 data.to_dict("records"),
                 attained_and_constrained=attained_and_constrained,

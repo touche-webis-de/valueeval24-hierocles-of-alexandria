@@ -2,6 +2,7 @@
 
 [[paper](https://touche.webis.de/publications.html#legkas_2024)]
 [[online demo](https://valueeval24.web.webis.de/)]
+[[package](https://pypi.org/project/valueeval24-hierocles-of-alexandria)]
 
 Package for running the Hierocles of Alexandria model.
 
