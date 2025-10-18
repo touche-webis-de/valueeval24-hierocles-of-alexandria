@@ -32,6 +32,20 @@ look_back = 2
 
 
 def combine_attained_and_constrained(predictions, mode=sum):
+    """
+    Combines the attained and constrained scores of each value.
+
+    Parameters:
+    - predictions (list): The predictions of the ValueClassifier
+    - mode: Function to combine the two scores (sum by default)
+
+    Returns:
+    - list: The predictions with scores combined
+
+    Raises:
+        KeyError: If the input does not contain scores for all detailed values, e.g., as combine_detailed_values has been
+        called beforehand
+    """
     for prediction in predictions:
         converted_prediction = {
             "Text-ID": prediction["Text-ID"],
@@ -50,6 +64,17 @@ def combine_attained_and_constrained(predictions, mode=sum):
 
 
 def combine_detailed_values(predictions, mode=max):
+    """
+    Combines the detailed values (e.g., 'Universalism: concern', 'Universalism: nature', and 'Universalism: tolerance')
+    to one per "coarse" value.
+
+    Parameters:
+    - predictions (list): The predictions of the ValueClassifier (split in attained and constrained or not)
+    - mode: Function to combine the scores (max by default)
+
+    Returns:
+    - list: The predictions with scores combined
+    """
     for prediction in predictions:
         converted_prediction = {
             "Text-ID": prediction["Text-ID"],
@@ -82,6 +107,13 @@ def combine_detailed_values(predictions, mode=max):
 
 
 def write_predictions(predictions, output_file=sys.stdout):
+    """
+    Writes the predictions to a TSV file (tab-separated-values).
+
+    Parameters:
+    - predictions (list): The predictions of the ValueClassifier (split in attained and constrained or not, detailed or not)
+    - output_file: File name or file handle to write to
+    """
     if isinstance(output_file, str):
         with open(output_file, "w", newline="") as output_file_handle:
             write_predictions(predictions, output_file=output_file_handle)
@@ -107,8 +139,18 @@ def write_predictions(predictions, output_file=sys.stdout):
 
 
 class ValueClassifier(object):
+    """
+    The classifier of team Hierocles of Alexandria, winning the ValueEval'24 shared task.
+    """
 
     def __init__(self, use_cpu=False, **kwargs):
+        """
+        Creates the classifier.
+
+        Parameters:
+        - use_cpu (bool): Whether to force using the CPU even if a GPU is available
+        - kwargs: Arguments passed on to the model
+        """
         self._device = torch.device("cuda" if torch.cuda.is_available() and not use_cpu else "cpu")
         self._tokenizer = transformers.AutoTokenizer.from_pretrained(model_name)
         self._model = MultiHead_MultiLabel_XL.from_pretrained(
@@ -244,6 +286,26 @@ class ValueClassifier(object):
             attained_and_constrained=True,
             detailed_values=True
             ) -> Generator[dict, None, None] | dict | pandas.DataFrame:
+        """
+        Applies this classifier to the input data.
+
+        Parameters:
+        - data: The data to predict for, either a single sentence or dictionary, a list or generator of these, or a Pandas
+          data frame with corresponging columns:
+          Text-ID (consecutive sentences with the same ID are treated as belonging to the same text; optional: assumed to be
+          the same as the previous sentence if it does not exist),
+          Sentence-ID (a number, ignored; optional: assumed to be one plus the previous one in case the Text-ID is the same
+          and 1 if not),
+          Text (the actual text of the sentence; if only a str is provided, the str is taken as Text), and
+          Language (two-letter language code, one of 'EN' (default), 'EL', 'DE', 'TR', 'FR', 'BG', 'HE', 'IT', or 'NL')
+        - attained_and_constrained (bool): Whether to combinee the attained and constrained scores of each value.
+        - detailed_values (bool): Whether to combines the detailed values (e.g., 'Universalism: concern', 'Universalism:
+          nature', and 'Universalism: tolerance') to one per "coarse" value.
+
+        Returns:
+        - The predictions, either a single text/dictionary, generator, or data frame, matching the input data; the output
+          matches the input (with defaults put in), but additionally contains the predictions with the scores as values
+        """
         if isinstance(data, str):
             return next(self.predict(
                 [data],
@@ -267,4 +329,21 @@ class ValueClassifier(object):
             return predictions
 
     def predict_to_tsv(self, data, output_file=sys.stdout, **kwargs) -> None:
+        """
+        Applies this classifier to the input data and writes the predictions to a file.
+
+        Parameters:
+        - data: The data to predict for, either a single sentence or dictionary, a list or generator of these, or a Pandas
+          data frame with corresponging columns:
+          Text-ID (consecutive sentences with the same ID are treated as belonging to the same text; optional: assumed to be
+          the same as the previous sentence if it does not exist),
+          Sentence-ID (a number, ignored; optional: assumed to be one plus the previous one in case the Text-ID is the same
+          and 1 if not),
+          Text (the actual text of the sentence; if only a str is provided, the str is taken as Text), and
+          Language (two-letter language code, one of 'EN' (default), 'EL', 'DE', 'TR', 'FR', 'BG', 'HE', 'IT', or 'NL')
+        - output_file: File name or file handle to write to
+        - attained_and_constrained (bool): Whether to combinee the attained and constrained scores of each value.
+        - detailed_values (bool): Whether to combines the detailed values (e.g., 'Universalism: concern', 'Universalism:
+          nature', and 'Universalism: tolerance') to one per "coarse" value.
+        """
         write_predictions(self.predict(data, **kwargs), output_file)

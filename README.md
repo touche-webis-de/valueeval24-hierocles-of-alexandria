@@ -14,5 +14,5 @@ python -m valueeval24_hierocles_of_alexandria --help
 python -m valueeval24_hierocles_of_alexandria \
     --input data/examples/simple.tsv \
     --cpu \
-    --output output.tsv
+    --output data/examples/simple-output.tsv
 ```
