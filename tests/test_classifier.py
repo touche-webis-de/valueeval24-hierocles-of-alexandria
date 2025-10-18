@@ -1,6 +1,7 @@
 import csv
 from pathlib import Path
 import unittest
+import pandas
 
 from valueeval24_hierocles_of_alexandria import ValueClassifier
 
@@ -26,6 +27,13 @@ class TestClassifier(unittest.TestCase):
             predictions = list(self._classifier.predict(file))
             self.assertGreaterEqual(predictions[0]["Universalism: nature attained"], 0.5)
             self.assertGreaterEqual(predictions[1]["Universalism: nature constrained"], 0.5)
+
+    def test_pandas(self):
+        file_name = "simple.tsv"
+        data = pandas.read_csv(examples_path / file_name, sep="\t", header=0)
+        predictions = self._classifier.predict(data)
+        self.assertGreaterEqual(predictions.iloc[0]["Universalism: nature attained"], 0.5)
+        self.assertGreaterEqual(predictions.iloc[1]["Universalism: nature constrained"], 0.5)
 
 
 if __name__ == '__main__':

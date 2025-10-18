@@ -1,5 +1,6 @@
 import argparse
 import csv
+from transformers import BitsAndBytesConfig
 
 from .value_classifier import ValueClassifier
 
@@ -31,7 +32,8 @@ parser.add_argument(
     "to one (taking the maximum)."
 )
 parser.add_argument(
-    "--quantization"
+    "--quantization", choices=["none", "8bit", "4bit"], default="none",
+    help="Use a quantized model. The full, 8bit, and 4bit models require about 20GB, 10GB, and 5GB GPU RAM, respectively."
 )
 
 opts = parser.parse_args()
@@ -39,6 +41,10 @@ opts = parser.parse_args()
 
 def predict(input):
     quantization_config = None
+    if opts.quantization == "8bit":
+        quantization_config = BitsAndBytesConfig(load_in_8bit=True)
+    elif opts.quantization == "4bit":
+        quantization_config = BitsAndBytesConfig(load_in_4bit=True)
     classifier = ValueClassifier(use_cpu=opts.cpu, quantization_config=quantization_config)
     classifier.predict_to_tsv(
         input,

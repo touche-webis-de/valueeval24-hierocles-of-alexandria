@@ -114,7 +114,8 @@ class ValueClassifier(object):
         self._model = MultiHead_MultiLabel_XL.from_pretrained(
             model_name, problem_type="multi_label_classification", **kwargs
         )
-        self._model.to(self._device)  # type: ignore
+        if self._model.device.type != self._device:
+            self._model.to(self._device)  # type: ignore
 
     def _validate_sentence_id(self, validated, entry, i):
         if "Sentence-ID" in entry.keys():
@@ -134,8 +135,12 @@ class ValueClassifier(object):
                 if entry["Text-ID"] != validated["Text-ID"] and "Sentence-ID" not in entry.keys():
                     validated["Sentence-ID"] = 1
                 validated["Text-ID"] = entry["Text-ID"]
+            elif isinstance(entry["Text-ID"], int):
+                if str(entry["Text-ID"]) != validated["Text-ID"] and "Sentence-ID" not in entry.keys():
+                    validated["Sentence-ID"] = 1
+                validated["Text-ID"] = str(entry["Text-ID"])
             else:
-                raise ValueError(f"'Text-ID' of entry {i} is not a str but {type(entry['Text-ID'])}")
+                raise ValueError(f"'Text-ID' of entry {i} is not a str or int but {type(entry['Text-ID'])}")
 
     def _validate_language(self, validated, entry, i):
         if "Language" in entry.keys():
@@ -238,18 +243,20 @@ class ValueClassifier(object):
             data,
             attained_and_constrained=True,
             detailed_values=True
-            ) -> Generator[dict, None, None] | dict:
+            ) -> Generator[dict, None, None] | dict | pandas.DataFrame:
         if isinstance(data, str):
             return next(self.predict(
                 [data],
                 attained_and_constrained=attained_and_constrained,
                 detailed_values=detailed_values))  # type: ignore
         if isinstance(data, pandas.DataFrame):
-            # TODO return DataFrame
-            return self.predict(
-                data.to_dict("records"),
-                attained_and_constrained=attained_and_constrained,
-                detailed_values=detailed_values)
+            return pandas.DataFrame.from_records(
+                self.predict(
+                    data.to_dict("records"),
+                    attained_and_constrained=attained_and_constrained,
+                    detailed_values=detailed_values
+                )
+            )
         else:
             predictions = self._predict_for_text(self._validate_input_data(data))
             if not attained_and_constrained:
