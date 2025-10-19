@@ -156,7 +156,7 @@ class ValueClassifier(object):
         self._model = MultiHead_MultiLabel_XL.from_pretrained(
             model_name, problem_type="multi_label_classification", **kwargs
         )
-        if self._model.device.type != self._device:
+        if self._model.device.type != self._device.type:
             self._model.to(self._device)  # type: ignore
 
     def _validate_sentence_id(self, validated, entry, i):
