@@ -31,6 +31,28 @@ model_name = "SotirisLegkas/multi-head-xlm-xl-tokens-38"
 look_back = 2
 
 
+def get_gpu_memory():
+    """
+    Get the available memory for each GPU in MB.
+
+    Based on https://stackoverflow.com/a/59571639 .
+
+    Returns:
+    - list: The memory per GPU in MB (empty list if none are available)
+    """
+    import subprocess
+    try:
+        command = "nvidia-smi --query-gpu=memory.free --format=csv"
+        command_output = subprocess.check_output(command.split()).decode('ascii')
+        memory_free_info = command_output.split('\n')[:-1][1:]
+        memory_free_values = [
+            int(x.split()[0]) for i, x in enumerate(memory_free_info)
+        ]
+        return memory_free_values
+    except FileNotFoundError:
+        return []
+
+
 def combine_attained_and_constrained(predictions, mode=sum):
     """
     Combines the attained and constrained scores of each value.
@@ -149,9 +171,25 @@ class ValueClassifier(object):
 
         Parameters:
         - use_cpu (bool): Whether to force using the CPU even if a GPU is available
-        - kwargs: Arguments passed on to the model
+        - kwargs: Arguments passed on to the model; if "quantization_config" is not set, try to autodetect which quantization
+          to use based on available GPU memory; set "quantization_config" to "None" to force use the full model
         """
-        self._device = torch.device("cuda" if torch.cuda.is_available() and not use_cpu else "cpu")
+        cpu = use_cpu or not torch.cuda.is_available()
+        if not cpu and "quantization_config" not in kwargs:
+            gpu_memory_gigabyte = get_gpu_memory()[0] / 1024
+            if gpu_memory_gigabyte >= 20:
+                print(f"Detected GPU with at least 20GB memory (namely {gpu_memory_gigabyte}GB): taking full model")
+            elif gpu_memory_gigabyte >= 10:
+                print(f"Detected GPU with between 10GB and 20GB of memory (namely {gpu_memory_gigabyte}GB): taking 8bit model")
+                kwargs["quantization_config"] = transformers.BitsAndBytesConfig(load_in_8bit=True)
+            elif gpu_memory_gigabyte >= 5:
+                print(f"Detected GPU with between 5GB and 10GB of memory (namely {gpu_memory_gigabyte}GB): taking 4bit model")
+                kwargs["quantization_config"] = transformers.BitsAndBytesConfig(load_in_4bit=True)
+            else:
+                print(f"Detected GPU with less than 5GB of memory (namely {gpu_memory_gigabyte}GB): trying CPU")
+                cpu = True
+
+        self._device = torch.device("cpu" if cpu else "cuda")
         self._tokenizer = transformers.AutoTokenizer.from_pretrained(model_name)
         self._model = MultiHead_MultiLabel_XL.from_pretrained(
             model_name, problem_type="multi_label_classification", **kwargs
