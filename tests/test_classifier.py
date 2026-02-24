@@ -1,7 +1,6 @@
-import csv
 from pathlib import Path
 import unittest
-import pandas
+import pyvalues
 
 from valueeval24_hierocles_of_alexandria import ValueClassifier
 
@@ -16,24 +15,32 @@ class TestClassifier(unittest.TestCase):
 
     def test_simple_tsv(self):
         file_name = "simple.tsv"
-        with open(examples_path / file_name, newline="") as file:
-            predictions = list(self._classifier.predict(csv.DictReader(file, delimiter="\t")))
-            self.assertGreaterEqual(predictions[0]["Universalism: nature attained"], 0.5)
-            self.assertGreaterEqual(predictions[1]["Universalism: nature constrained"], 0.5)
+        documents = list(pyvalues.values.Values.read_tsv(
+            examples_path / file_name,
+            id_field="Text-ID",
+            read_values=False)
+        )
+        self.assertEqual(len(documents), 1)
+
+        document = documents[0]
+        if document.segments is None:
+            raise ValueError()
+        predictions = list(self._classifier.classify_document_for_refined_values_with_attainment(
+            segments=document.segments,
+            language=document.language
+        ))
+        self.assertEqual(len(predictions), 2)
+        self.assertGreaterEqual(predictions[0][0].universalism_nature.attained, 0.5)
+        self.assertGreaterEqual(predictions[1][0].universalism_nature.constrained, 0.5)
 
     def test_simple_txt(self):
         file_name = "simple.txt"
         with open(examples_path / file_name) as file:
-            predictions = list(self._classifier.predict(file))
-            self.assertGreaterEqual(predictions[0]["Universalism: nature attained"], 0.5)
-            self.assertGreaterEqual(predictions[1]["Universalism: nature constrained"], 0.5)
-
-    def test_pandas(self):
-        file_name = "simple.tsv"
-        data = pandas.read_csv(examples_path / file_name, sep="\t", header=0)
-        predictions = self._classifier.predict(data)
-        self.assertGreaterEqual(predictions.iloc[0]["Universalism: nature attained"], 0.5)
-        self.assertGreaterEqual(predictions.iloc[1]["Universalism: nature constrained"], 0.5)
+            predictions = list(self._classifier.classify_document_for_refined_values_with_attainment(
+                segments=file
+            ))
+            self.assertGreaterEqual(predictions[0][0].universalism_nature.attained, 0.5)
+            self.assertGreaterEqual(predictions[1][0].universalism_nature.constrained, 0.5)
 
 
 if __name__ == '__main__':

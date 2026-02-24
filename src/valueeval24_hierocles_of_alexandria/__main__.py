@@ -1,5 +1,5 @@
 import argparse
-import csv
+import pyvalues
 from transformers import BitsAndBytesConfig
 
 from .value_classifier import ValueClassifier
@@ -23,15 +23,6 @@ parser.add_argument(
     help="Force usage of CPU (and not GPU)."
 )
 parser.add_argument(
-    "--combine-attained-and-constrained", action=argparse.BooleanOptionalAction,
-    help="Combine attained and constrained scores to one (taking the sum)."
-)
-parser.add_argument(
-    "--combine-detailed-values", action=argparse.BooleanOptionalAction,
-    help="Combine detailed values (e.g., 'Universalism: concern', 'Universalism: nature', and 'Universalism: tolerance') " +
-    "to one (taking the maximum)."
-)
-parser.add_argument(
     "--quantization", choices=["none", "8bit", "4bit"],
     help="Use a quantized model. The full, 8bit, and 4bit models require about 20GB, 10GB, and 5GB GPU RAM, respectively."
 )
@@ -39,7 +30,7 @@ parser.add_argument(
 opts = parser.parse_args()
 
 
-def predict(input):
+def get_classifier():
     kwargs = {}
     if opts.quantization == "none":
         kwargs["quantization_config"] = None
@@ -48,19 +39,33 @@ def predict(input):
     elif opts.quantization == "4bit":
         kwargs["quantization_config"] = BitsAndBytesConfig(load_in_4bit=True)
 
-    classifier = ValueClassifier(use_cpu=opts.cpu, **kwargs)
-    classifier.predict_to_tsv(
-        input,
-        output_file=opts.output,
-        attained_and_constrained=not opts.combine_attained_and_constrained,
-        detailed_values=not opts.combine_detailed_values)
+    return ValueClassifier(use_cpu=opts.cpu, **kwargs)
 
+with open(opts.output, "w") as output_file:
+    writer = pyvalues.RefinedValuesWithAttainment.writer_tsv_with_text(output_file)
+    classifier = get_classifier()
 
-if opts.input.endswith(".txt"):
-    with open(opts.input) as file:
-        predict(file)
-elif opts.input.endswith(".tsv"):
-    with open(opts.input, newline="") as file:
-        predict(csv.DictReader(file, delimiter="\t"))
-else:
-    raise ValueError(f"Input file '{opts.input}' ends neither with '.txt' nor '.tsv'")
+    if opts.input.endswith(".txt"):
+        with open(opts.input) as file:
+            predictions = classifier.classify_document_for_refined_values_with_attainment(
+                segments=file
+            )
+            writer.write_all(predictions, language="en")  # type: ignore
+    elif opts.input.endswith(".tsv"):
+        for document in pyvalues.values.Values.read_tsv(
+            opts.input,
+            id_field="Text-ID",
+            read_values=False
+        ):
+            if document.segments is not None:
+                predictions = classifier.classify_document_for_refined_values_with_attainment(
+                    segments=document.segments,
+                    language=document.language
+                )
+                writer.write_all(
+                    predictions,
+                    language=document.language,
+                    document_id=document.id
+                )
+    else:
+        raise ValueError(f"Input file '{opts.input}' ends neither with '.txt' nor '.tsv'")
