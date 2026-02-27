@@ -42,7 +42,7 @@ def get_gpu_memory():
         return []
 
 
-class ValueClassifier(pyvalues.RefinedValuesWithAttainmentClassifier):
+class ValueEval24Classifier(pyvalues.RefinedValuesWithAttainmentClassifier):
     """
     The classifier of team Hierocles of Alexandria, winning the ValueEval'24 shared task.
     """
@@ -98,11 +98,11 @@ class ValueClassifier(pyvalues.RefinedValuesWithAttainmentClassifier):
         ]
         return confidence
 
-    def classify_document_for_refined_values_with_attainment(
+    def classify_segments_for_refined_values_with_attainment(
             self,
             segments: Iterable[str],
-            language: LanguageAlpha2 = LanguageAlpha2("en")
-    ) -> Generator[Tuple[pyvalues.RefinedValuesWithAttainment, str], None, None]:
+            language: LanguageAlpha2 | str = LanguageAlpha2("en")
+    ) -> Generator[pyvalues.RefinedValuesWithAttainment, None, None]:
         if language.upper() not in lang_dict.keys():
             self._raise_unsupported_language(language)
 
@@ -122,7 +122,7 @@ class ValueClassifier(pyvalues.RefinedValuesWithAttainmentClassifier):
             output = self._model(**input)
             predictions = output.logits.detach().cpu().numpy()
             confidence_values = self._thresholds(predictions[0])
-            yield (pyvalues.RefinedValuesWithAttainment.from_list(confidence_values), segment)
+            yield pyvalues.RefinedValuesWithAttainment.from_list(confidence_values, cap_at_one=True)
 
             # prepare for next segment
             text_labels = [f"<{id2label[j]}>" for j, value in enumerate(confidence_values) if value >= 0.5]

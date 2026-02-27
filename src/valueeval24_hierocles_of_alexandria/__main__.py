@@ -2,7 +2,7 @@ import argparse
 import pyvalues
 from transformers import BitsAndBytesConfig
 
-from .value_classifier import ValueClassifier
+from .value_classifier import ValueEval24Classifier
 
 parser = argparse.ArgumentParser(
     prog="valueeval24-hierocles-of-alexandria",
@@ -39,7 +39,7 @@ def get_classifier():
     elif opts.quantization == "4bit":
         kwargs["quantization_config"] = BitsAndBytesConfig(load_in_4bit=True)
 
-    return ValueClassifier(use_cpu=opts.cpu, **kwargs)
+    return ValueEval24Classifier(use_cpu=opts.cpu, **kwargs)
 
 with open(opts.output, "w") as output_file:
     writer = pyvalues.RefinedValuesWithAttainment.writer_tsv_with_text(output_file)
@@ -47,7 +47,7 @@ with open(opts.output, "w") as output_file:
 
     if opts.input.endswith(".txt"):
         with open(opts.input) as file:
-            predictions = classifier.classify_document_for_refined_values_with_attainment(
+            predictions = classifier.classify_segments_for_refined_values_with_attainment(
                 segments=file
             )
             writer.write_all(predictions, language="en")  # type: ignore
@@ -58,14 +58,9 @@ with open(opts.output, "w") as output_file:
             read_values=False
         ):
             if document.segments is not None:
-                predictions = classifier.classify_document_for_refined_values_with_attainment(
-                    segments=document.segments,
-                    language=document.language
+                annotated_document = classifier.classify_document_for_refined_values_with_attainment(
+                    document=document
                 )
-                writer.write_all(
-                    predictions,
-                    language=document.language,
-                    document_id=document.id
-                )
+                writer.write_document(annotated_document)
     else:
         raise ValueError(f"Input file '{opts.input}' ends neither with '.txt' nor '.tsv'")

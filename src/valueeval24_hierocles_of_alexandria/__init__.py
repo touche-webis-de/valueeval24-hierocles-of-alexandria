@@ -1,9 +1,9 @@
 from .value_classifier import (
-    ValueClassifier
+    ValueEval24Classifier
 )
 
 __all__ = [
-    "ValueClassifier"
+    "ValueEval24Classifier"
 ]
 
 from importlib import metadata
