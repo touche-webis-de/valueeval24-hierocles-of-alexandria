@@ -1,6 +1,6 @@
 [project]
 name = "valueeval24-hierocles-of-alexandria"
-version = "0.6.0"
+version = "0.7.0"
 description = "Detect human values in text (winning model of ValueEval'24)"
 requires-python = ">=3.11,<3.15"
 readme = "README.md"
