@@ -15,10 +15,11 @@ class TestClassifier(unittest.TestCase):
 
     def test_simple_tsv(self):
         file_name = "simple.tsv"
-        documents = list(pyvalues.values.Values.read_tsv(
+        documents = list(pyvalues.Document.read_tsv(
             examples_path / file_name,
-            id_field="Text-ID",
-            read_values=False)
+            document_id_field="Text-ID",
+            language_field="Language",
+            text_field="Text")
         )
         self.assertEqual(len(documents), 1)
 
