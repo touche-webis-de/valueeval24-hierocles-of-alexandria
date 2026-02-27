@@ -10,9 +10,9 @@ parser = argparse.ArgumentParser(
 )
 parser.add_argument(
     "--input", type=str, required=True,
-    help="Input file, either a '.txt' with one English sentence per line or a '.tsv' with the column 'Text' (the sentence) " +
-    "and optional columns 'Language' (one of 'BG', 'DE', 'EL', 'EN' (default), 'FR', 'HE', 'IT', 'NL', or 'TR'), 'Text-ID' " +
-    "(change of values indicates new text), and 'Sentence-ID' (arbitrary integer to identify the sentence)."
+    help="""Input file, either a '.txt' with one English sentence per line or a '.tsv' with the column 'Text' (the sentence)
+    and optional columns 'Language' (one of 'BG', 'DE', 'EL', 'EN' (default), 'FR', 'HE', 'IT', 'NL', or 'TR'), 'Text-ID'
+    (change of values indicates new text), and 'Sentence-ID' (arbitrary integer to identify the sentence)."""
 )
 parser.add_argument(
     "--output", type=str, required=True,
@@ -24,7 +24,8 @@ parser.add_argument(
 )
 parser.add_argument(
     "--quantization", choices=["none", "8bit", "4bit"],
-    help="Use a quantized model. The full, 8bit, and 4bit models require about 20GB, 10GB, and 5GB GPU RAM, respectively."
+    help="""Use a quantized model. The full, 8bit, and 4bit models
+    require about 20GB, 10GB, and 5GB GPU RAM, respectively."""
 )
 
 opts = parser.parse_args()
@@ -40,6 +41,7 @@ def get_classifier():
         kwargs["quantization_config"] = BitsAndBytesConfig(load_in_4bit=True)
 
     return ValueEval24Classifier(use_cpu=opts.cpu, **kwargs)
+
 
 with open(opts.output, "w") as output_file:
     writer = pyvalues.RefinedValuesWithAttainment.writer_tsv_with_text(output_file)

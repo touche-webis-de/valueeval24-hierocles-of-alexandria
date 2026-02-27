@@ -1,7 +1,8 @@
 import numpy
 import pyvalues
+from pyvalues.classifier import RefinedValuesWithAttainmentClassifier
 import transformers
-from typing import Generator, Iterable, Tuple
+from typing import Generator, Iterable
 import torch
 from pydantic_extra_types.language_code import LanguageAlpha2
 
@@ -42,7 +43,7 @@ def get_gpu_memory():
         return []
 
 
-class ValueEval24Classifier(pyvalues.RefinedValuesWithAttainmentClassifier):
+class ValueEval24Classifier(RefinedValuesWithAttainmentClassifier):
     """
     The classifier of team Hierocles of Alexandria, winning the ValueEval'24 shared task.
     """
@@ -80,7 +81,7 @@ class ValueEval24Classifier(pyvalues.RefinedValuesWithAttainmentClassifier):
             self._model.to(self._device)  # type: ignore
 
     def _sigmoid(self, predictions):
-        return 1/(1 + numpy.exp(-predictions))
+        return 1 / (1 + numpy.exp(-predictions))
 
     def _map_to_confidence(self, x, threshold):
         if -0.00000001 <= x <= 1.00000001:
