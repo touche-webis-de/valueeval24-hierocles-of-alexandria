@@ -1,0 +1,77 @@
+# This CITATION.cff file was generated with cffinit.
+# Visit https://bit.ly/cffinit to generate yours today!
+
+cff-version: 1.2.0
+title: ValueEval'24 Hierocles of Alexandria
+message: >-
+  If you use this software, please cite it using the
+  metadata from this file.
+type: software
+authors:
+  - given-names: Sotirios
+    family-names: Legkas
+    affiliation: >-
+      nstitute of Informatics & Telecommunications, National
+      Centre for Scientific Research (N.C.S.R.)
+      'Demokritos', Aghia Paraskevi, Attica, Greece
+    email: sotirislegkas@iit.demokritos.gr
+    orcid: 'https://orcid.org/0009-0000-9468-5650'
+  - given-names: Christina
+    family-names: Christodoulou
+    email: ch.christodoulou@iit.demokritos.gr
+    affiliation: >-
+      Institute of Informatics & Telecommunications,
+      National Centre for Scientific Research (N.C.S.R.)
+      'Demokritos', Aghia Paraskevi, Attica, Greece
+    orcid: 'https://orcid.org/0009-0009-5616-3937'
+  - given-names: Matthaios
+    family-names: Zidianakis
+    email: mzidianakis@iit.demokritos.gr
+    affiliation: >-
+      Institute of Informatics & Telecommunications,
+      National Centre for Scientific Research (N.C.S.R.)
+      'Demokritos', Aghia Paraskevi, Attica, Greece
+    orcid: 'https://orcid.org/0009-0009-5102-8103'
+  - given-names: 'Dimitrios '
+    family-names: Koutrintzes
+    email: dkoutrintzes@iit.demokritos.gr
+    affiliation: >-
+      Institute of Informatics & Telecommunications,
+      National Centre for Scientific Research (N.C.S.R.)
+      'Demokritos', Aghia Paraskevi, Attica, Greece
+    orcid: 'https://orcid.org/0009-0003-7401-6347'
+  - given-names: Maria
+    family-names: Dagioglou
+    email: mdagiogl@iit.demokritos.gr
+    affiliation: >-
+      Institute of Informatics & Telecommunications,
+      National Centre for Scientific Research (N.C.S.R.)
+      'Demokritos', Aghia Paraskevi, Attica, Greece
+    orcid: 'https://orcid.org/0000-0002-3357-2844'
+  - given-names: Georgios
+    family-names: Petasis
+    email: petasis@iit.demokritos.gr
+    affiliation: >-
+      Institute of Informatics & Telecommunications,
+      National Centre for Scientific Research (N.C.S.R.)
+      'Demokritos', Aghia Paraskevi, Attica, Greece
+    orcid: 'https://orcid.org/0000-0003-3157-1597'
+  - given-names: 'Nicolas '
+    family-names: Handke
+    email: nicolas@bioinf.uni-leipzig.de
+    affiliation: 'Leipzig University, Leipzig, Germany'
+    orcid: 'https://orcid.org/0000-0003-1349-4671'
+  - given-names: Johannes
+    family-names: Kiesel
+    email: Johannes.Kiesel@gesis.org
+    orcid: 'https://orcid.org/0000-0002-1617-6508'
+    affiliation: >-
+      GESIS - Leibniz Institute for the Social Sciences,
+      Cologne, Germany
+identifiers:
+  - type: url
+    value: 'https://touche.webis.de/publications.html#legkas_2024'
+    description: Publication
+repository-code: >-
+  https://github.com/touche-webis-de/valueeval24-hierocles-of-alexandria
+license: MIT
