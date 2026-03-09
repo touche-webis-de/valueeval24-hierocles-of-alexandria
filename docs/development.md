@@ -22,3 +22,17 @@ poetry run flake8 src --count --max-complexity=10 --max-line-length=127 --statis
 
 - Change `version` in [`pyproject.toml`](../pyproject.toml)
 - Add a release via [Github web interface](https://github.com/touche-webis-de/valueeval24-hierocles-of-alexandria/releases/new), tagged `v<VERSION>`
+
+## Methods Hub Compliance
+
+Run once:
+
+```shell
+poetry self add poetry-plugin-export
+```
+
+Create requirements.txt:
+
+```shell
+poetry export -f requirements.txt --output requirements.txt --without-hashes
+```
