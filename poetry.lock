@@ -1727,14 +1727,14 @@ six = ">=1.5"
 
 [[package]]
 name = "pyvalues"
-version = "0.8.0"
+version = "0.8.1"
 description = "Python library for processing, evaluating, and visualizing (Schwartz) human value scores"
 optional = false
 python-versions = ">=3.11"
 groups = ["main"]
 files = [
-    {file = "pyvalues-0.8.0-py3-none-any.whl", hash = "sha256:1e0c7db4e11b82f299f18138751556f6936625db5990129fb7889ffff6e0e4a0"},
-    {file = "pyvalues-0.8.0.tar.gz", hash = "sha256:bae7266f9afb8a3b7395f650958a359dbc7cf7ee9a39d723728d511a35a8be0b"},
+    {file = "pyvalues-0.8.1-py3-none-any.whl", hash = "sha256:4f530a038f2e8f666ee2041c5d046e56ac08c1979ffc906561120cc080d7d801"},
+    {file = "pyvalues-0.8.1.tar.gz", hash = "sha256:ddf4244d3e83916f9c160ef0b81a6a20f461c3bd6b20736ce06899d7b6149257"},
 ]
 
 [package.dependencies]
@@ -2398,4 +2398,4 @@ zstd = ["backports-zstd (>=1.0.0) ; python_version < \"3.14\""]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.11,<3.15"
-content-hash = "ae7ddcf33631bf480d83aad486c017190c4ef25b33af5bf9d7cd95266d5a8395"
+content-hash = "4288bd3a799285471990b4ddf184348e64c7de87dd382111bfcb357c73771e76"
