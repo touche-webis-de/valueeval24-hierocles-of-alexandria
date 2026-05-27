@@ -48,12 +48,13 @@ class ValueEval24Classifier(RefinedValuesWithAttainmentClassifier):
     The classifier of team Hierocles of Alexandria, winning the ValueEval'24 shared task.
     """
 
-    def __init__(self, use_cpu=False, **kwargs):
+    def __init__(self, use_cpu=False, model_name_or_path=model_name, **kwargs):
         """
         Creates the classifier.
 
         Parameters:
         - use_cpu (bool): Whether to force using the CPU even if a GPU is available
+        - model_name_or_path (str): The name of the model to load (if not the standard one)
         - kwargs: Arguments passed on to the model; if "quantization_config" is not set, try to autodetect which quantization
           to use based on available GPU memory; set "quantization_config" to "None" to force use the full model
         """
@@ -73,9 +74,9 @@ class ValueEval24Classifier(RefinedValuesWithAttainmentClassifier):
                 cpu = True
 
         self._device = torch.device("cpu" if cpu else "cuda")
-        self._tokenizer = transformers.AutoTokenizer.from_pretrained(model_name)
+        self._tokenizer = transformers.AutoTokenizer.from_pretrained(model_name_or_path)
         self._model = MultiHead_MultiLabel_XL.from_pretrained(
-            model_name, problem_type="multi_label_classification", **kwargs
+            model_name_or_path, problem_type="multi_label_classification", **kwargs
         )
         if self._model.device.type != self._device.type:
             self._model.to(self._device)  # type: ignore
